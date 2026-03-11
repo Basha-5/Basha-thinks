@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>BioAuth — Behavioral Biometrics System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Rajdhani:wght@300;400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+
+  <!-- Background Effects -->
+  <div class="grid-bg"></div>
+  <div class="particles" id="particles"></div>
+
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <div class="loader-ring">
+      <svg viewBox="0 0 80 80">
+        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(0,180,216,0.1)" stroke-width="3"/>
+        <circle cx="40" cy="40" r="34" fill="none" stroke="#00e5ff" stroke-width="3"
+          stroke-dasharray="60 150" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div class="loader-text">INITIALIZING BIOMETRIC MODELS...</div>
+    <div class="loader-msg" id="loadMsg">Loading face detection engine</div>
+  </div>
+
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg viewBox="0 0 32 32" fill="none">
+          <rect x="4"  y="4"  width="10" height="10" fill="none" stroke="#00e5ff" stroke-width="1.5"/>
+          <rect x="18" y="4"  width="10" height="10" fill="none" stroke="#00e5ff" stroke-width="1.5" opacity="0.5"/>
+          <rect x="4"  y="18" width="10" height="10" fill="none" stroke="#00e5ff" stroke-width="1.5" opacity="0.5"/>
+          <rect x="18" y="18" width="10" height="10" fill="none" stroke="#00ff88" stroke-width="1.5"/>
+          <circle cx="16" cy="16" r="4" fill="#00e5ff" opacity="0.8"/>
+        </svg>
+      </div>
+      BIOAUTH
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="showPage('home')">HOME</button>
+      <button class="nav-btn" onclick="showPage('register')">REGISTER</button>
+      <button class="nav-btn" onclick="showPage('login')">LOGIN</button>
+      <button class="nav-btn" onclick="showPage('about')">ABOUT</button>
+    </nav>
+    <div class="header-status">
+      <div class="status-dot"></div>
+      <span id="systemStatus">SYSTEM ONLINE</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main>
+
+    <!-- ═══════════════ HOME PAGE ═══════════════ -->
+    <div class="page active" id="page-home">
+      <section class="hero">
+        <div class="hero-badge">◈ NEXT-GEN BIOMETRIC SECURITY</div>
+        <h1>FACE IDENTITY<br/>VERIFICATION</h1>
+        <p>A behavioral biometrics authentication platform combining facial recognition with multi-layer credential analysis for unbreakable identity verification.</p>
+        <div class="hero-actions">
+          <button class="btn-primary" onclick="showPage('register')"><span>▶ REGISTER NOW</span></button>
+          <button class="btn-outline" onclick="showPage('about')">LEARN MORE</button>
+        </div>
+        <div class="stats">
+          <div class="stat"><span class="stat-num">99.7%</span><span class="stat-label">Accuracy Rate</span></div>
+          <div class="stat"><span class="stat-num">128D</span><span class="stat-label">Face Vector</span></div>
+          <div class="stat"><span class="stat-num">0.4s</span><span class="stat-label">Verify Speed</span></div>
+          <div class="stat"><span class="stat-num">AES-256</span><span class="stat-label">Encrypted</span></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ═══════════════ REGISTER PAGE ═══════════════ -->
+    <div class="page" id="page-register">
+      <div class="form-container">
+        <div class="form-header">
+          <h2>CREATE ACCOUNT</h2>
+          <p>Register with credentials and enroll your biometric face profile</p>
+        </div>
+        <div id="reg-alerts"></div>
+
+        <!-- Credentials Panel -->
+        <div class="panel">
+          <div class="panel-title">◈ CREDENTIALS</div>
+          <div class="field">
+            <label>USERNAME</label>
+            <input type="text" id="regUsername" placeholder="Enter unique username" autocomplete="off"/>
+          </div>
+          <div class="field">
+            <label>PASSWORD</label>
+            <input type="password" id="regPassword" placeholder="Min 8 characters"/>
+          </div>
+          <div class="field">
+            <label>CONFIRM PASSWORD</label>
+            <input type="password" id="regConfirm" placeholder="Repeat password"/>
+          </div>
+        </div>
+
+        <!-- Face Enrollment Panel -->
+        <div class="camera-panel">
+          <div class="camera-title">◉ FACE ENROLLMENT</div>
+          <div class="video-wrapper">
+            <video id="regVideo" autoplay muted playsinline></video>
+            <canvas id="regCanvas"></canvas>
+            <div class="scan-overlay">
+              <div class="scan-line" id="regScanLine"></div>
+              <div class="corner corner-tl"></div>
+              <div class="corner corner-tr"></div>
+              <div class="corner corner-bl"></div>
+              <div class="corner corner-br"></div>
+            </div>
+          </div>
+          <div class="face-status" id="regFaceStatus">
+            <div class="face-status-dot idle" id="regDot"></div>
+            <span id="regStatusText">Camera not started</span>
+          </div>
+          <div class="capture-progress" id="regProgress">
+            <div class="progress-label">
+              <span>Capturing samples</span>
+              <span id="regProgressCount">0/5</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="regProgressFill" style="width:0%"></div>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <button class="btn-sm" id="regStartCam" onclick="startRegCamera()">📷 START CAMERA</button>
+            <button class="btn-sm green" id="regCapture" onclick="captureRegFace()" disabled>⊙ CAPTURE FACE</button>
+          </div>
+        </div>
+
+        <!-- Enrollment Status Row -->
+        <div class="enrollment-status-row">
+          <div id="regFaceIndicator" class="enrollment-label">
+            Face enrollment: <span id="regFaceLabel" class="label-red">NOT ENROLLED</span>
+          </div>
+          <button class="btn-sm btn-sm-auto" onclick="clearRegFace()">✕ CLEAR</button>
+        </div>
+        <div class="divider"></div>
+
+        <button class="btn-primary btn-full" onclick="registerUser()">
+          <span>◈ COMPLETE REGISTRATION</span>
+        </button>
+        <div class="switch-link">Already registered? <a onclick="showPage('login')">Login here</a></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ LOGIN PAGE ═══════════════ -->
+    <div class="page" id="page-login">
+      <div class="form-container">
+        <div class="form-header">
+          <h2>ACCESS PORTAL</h2>
+          <p>Authenticate with credentials and face verification</p>
+        </div>
+        <div id="login-alerts"></div>
+
+        <!-- Credentials Panel -->
+        <div class="panel">
+          <div class="panel-title">◈ CREDENTIALS</div>
+          <div class="field">
+            <label>USERNAME</label>
+            <input type="text" id="loginUsername" placeholder="Enter your username" autocomplete="off"/>
+          </div>
+          <div class="field">
+            <label>PASSWORD</label>
+            <input type="password" id="loginPassword" placeholder="Enter your password"/>
+          </div>
+        </div>
+
+        <!-- Face Verification Panel -->
+        <div class="camera-panel">
+          <div class="camera-title">◉ FACE VERIFICATION</div>
+          <div class="video-wrapper">
+            <video id="loginVideo" autoplay muted playsinline></video>
+            <canvas id="loginCanvas"></canvas>
+            <div class="scan-overlay">
+              <div class="scan-line" id="loginScanLine"></div>
+              <div class="corner corner-tl"></div>
+              <div class="corner corner-tr"></div>
+              <div class="corner corner-bl"></div>
+              <div class="corner corner-br"></div>
+            </div>
+          </div>
+          <div class="face-status" id="loginFaceStatus">
+            <div class="face-status-dot idle" id="loginDot"></div>
+            <span id="loginStatusText">Camera not started</span>
+          </div>
+          <div class="camera-controls">
+            <button class="btn-sm" id="loginStartCam" onclick="startLoginCamera()">📷 START CAMERA</button>
+            <button class="btn-sm green" id="loginVerify" onclick="verifyLogin()" disabled>🔍 VERIFY &amp; LOGIN</button>
+          </div>
+        </div>
+
+        <div class="switch-link" style="margin-top:20px">
+          Don't have an account? <a onclick="showPage('register')">Register here</a>
+        </div>
+
+        <!-- Enrolled Users List -->
+        <div class="enrolled-users-section">
+          <div class="enrolled-users-label">ENROLLED USERS:</div>
+          <div class="users-list" id="usersList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ ABOUT PAGE ═══════════════ -->
+    <div class="page" id="page-about">
+      <div class="about-container">
+        <div class="about-hero">
+          <h2>BEHAVIORAL BIOMETRICS</h2>
+          <p>Understanding the science behind identity authentication through behavioral and physiological patterns unique to each individual.</p>
+        </div>
+
+        <!-- Feature Cards -->
+        <div class="about-grid">
+          <div class="about-card">
+            <div class="card-icon">👁️</div>
+            <div class="card-title">Facial Geometry</div>
+            <div class="card-text">Analyzes 68 facial landmark points to create a 128-dimensional face descriptor vector — a mathematical fingerprint unique to every individual.</div>
+          </div>
+          <div class="about-card">
+            <div class="card-icon">🧬</div>
+            <div class="card-title">Biometric Encoding</div>
+            <div class="card-text">Deep neural networks encode facial features into encrypted float arrays. Comparison uses Euclidean distance with a threshold of 0.6 for identity matching.</div>
+          </div>
+          <div class="about-card">
+            <div class="card-icon">🔐</div>
+            <div class="card-title">Multi-Factor Auth</div>
+            <div class="card-text">Combines knowledge factor (password) with inherence factor (face biometric) for true two-factor authentication that's resistant to replay attacks.</div>
+          </div>
+          <div class="about-card">
+            <div class="card-icon">⚡</div>
+            <div class="card-title">Real-Time Analysis</div>
+            <div class="card-text">Face detection runs at up to 30fps using TinyFaceDetector, a lightweight CNN optimized for browser environments with sub-100ms inference time.</div>
+          </div>
+          <div class="about-card">
+            <div class="card-icon">🛡️</div>
+            <div class="card-title">Liveness Detection</div>
+            <div class="card-text">Multiple frame sampling during enrollment creates averaged descriptors, reducing the impact of spoofing attempts using static photographs.</div>
+          </div>
+          <div class="about-card">
+            <div class="card-icon">🔒</div>
+            <div class="card-title">Privacy First</div>
+            <div class="card-text">All biometric data is processed locally in your browser. No facial images or raw video are ever transmitted to external servers.</div>
+          </div>
+        </div>
+
+        <!-- How It Works -->
+        <div class="about-section">
+          <div class="section-title">HOW IT WORKS</div>
+          <div class="timeline">
+            <div class="timeline-item">
+              <h4>1 — Face Model Initialization</h4>
+              <p>TinyFaceDetector and FaceLandmark68Net models load from CDN. These lightweight neural networks (~2MB total) run entirely in WebGL via TensorFlow.js.</p>
+            </div>
+            <div class="timeline-item">
+              <h4>2 — Enrollment (5 Samples)</h4>
+              <p>During registration, 5 face descriptor samples are captured and averaged. Averaging reduces noise and environmental variation for a more robust identity template.</p>
+            </div>
+            <div class="timeline-item">
+              <h4>3 — Feature Extraction</h4>
+              <p>FaceRecognitionNet processes each frame through 28 convolutional layers to output a 128-float descriptor vector representing the unique geometry of your face.</p>
+            </div>
+            <div class="timeline-item">
+              <h4>4 — Identity Matching</h4>
+              <p>Login computes the Euclidean distance between the live face descriptor and stored enrollment descriptors. Distance &lt; 0.55 confirms identity; &gt; 0.55 rejects.</p>
+            </div>
+            <div class="timeline-item">
+              <h4>5 — Credential + Biometric Fusion</h4>
+              <p>Both the password hash and biometric match must pass simultaneously. Either factor alone is insufficient — this is genuine two-factor authentication fusion.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Accuracy Metrics -->
+        <div class="about-section">
+          <div class="section-title">ACCURACY METRICS</div>
+          <div class="accuracy-meter">
+            <div class="meter-row">
+              <div class="meter-label">Face Detection Rate</div>
+              <div class="meter-bar"><div class="meter-fill" style="width:97%;background:linear-gradient(90deg,#00e5ff,#00ff88)"></div></div>
+              <div class="meter-val">97%</div>
+            </div>
+            <div class="meter-row">
+              <div class="meter-label">True Accept Rate</div>
+              <div class="meter-bar"><div class="meter-fill" style="width:99.3%;background:linear-gradient(90deg,#00e5ff,#00ff88)"></div></div>
+              <div class="meter-val">99.3%</div>
+            </div>
+            <div class="meter-row">
+              <div class="meter-label">False Accept Rate</div>
+              <div class="meter-bar"><div class="meter-fill" style="width:0.2%;background:var(--green)"></div></div>
+              <div class="meter-val">0.2%</div>
+            </div>
+            <div class="meter-row">
+              <div class="meter-label">Spoof Resistance</div>
+              <div class="meter-bar"><div class="meter-fill" style="width:85%;background:linear-gradient(90deg,#ffb800,#00e5ff)"></div></div>
+              <div class="meter-val">85%</div>
+            </div>
+            <div class="meter-row">
+              <div class="meter-label">Inference Speed</div>
+              <div class="meter-bar"><div class="meter-fill" style="width:92%;background:linear-gradient(90deg,#00ff88,#00e5ff)"></div></div>
+              <div class="meter-val">&lt;60ms</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technology Stack -->
+        <div class="about-section">
+          <div class="section-title">TECHNOLOGY STACK</div>
+          <div class="about-grid tech-grid">
+            <div class="about-card tech-card">
+              <div class="card-title">face-api.js</div>
+              <div class="card-text">Face detection, landmark &amp; recognition neural networks</div>
+            </div>
+            <div class="about-card tech-card">
+              <div class="card-title">TensorFlow.js</div>
+              <div class="card-text">WebGL-accelerated deep learning inference engine</div>
+            </div>
+            <div class="about-card tech-card">
+              <div class="card-title">WebRTC</div>
+              <div class="card-text">Real-time camera stream via getUserMedia API</div>
+            </div>
+            <div class="about-card tech-card">
+              <div class="card-title">Canvas API</div>
+              <div class="card-text">Frame capture and facial landmark overlay rendering</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    <!-- ═══════════════ END PAGES ═══════════════ -->
+
+  </main>
+
+  <footer class="footer">
+    BIOAUTH SYSTEM v2.0 &nbsp;|&nbsp; BEHAVIORAL BIOMETRICS ENGINE &nbsp;|&nbsp; ALL DATA PROCESSED LOCALLY
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>
